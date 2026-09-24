@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinNews AI – Intelligent Financial News Simplifier</title>
+  <meta name="description" content="AI-Powered Financial News Simplifier using Groq LLaMA 3.3-70B and NewsAPI. Transform complex market jargon into clear, reader-friendly summaries.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <!-- Live Market Ticker Ribbon -->
+  <div class="market-ticker-wrap" id="marketTicker">
+    <div class="market-ticker">
+      <div class="ticker-item"><span class="ticker-symbol">S&amp;P 500</span> <span class="ticker-price">5,864.20</span> <span class="ticker-change up">+0.42% ▲</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">NASDAQ</span> <span class="ticker-price">18,398.75</span> <span class="ticker-change up">+0.78% ▲</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">DOW JONES</span> <span class="ticker-price">42,215.10</span> <span class="ticker-change down">-0.12% ▼</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">US 10Y YIELD</span> <span class="ticker-price">4.195%</span> <span class="ticker-change up">+0.03 ▲</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">BTC/USD</span> <span class="ticker-price">$66,450.00</span> <span class="ticker-change up">+2.15% ▲</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">ETH/USD</span> <span class="ticker-price">$2,640.80</span> <span class="ticker-change up">+1.85% ▲</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">BRENT CRUDE</span> <span class="ticker-price">$74.20</span> <span class="ticker-change down">-0.65% ▼</span></div>
+      <!-- Duplicate items for seamless continuous ticker loop -->
+      <div class="ticker-item"><span class="ticker-symbol">S&amp;P 500</span> <span class="ticker-price">5,864.20</span> <span class="ticker-change up">+0.42% ▲</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">NASDAQ</span> <span class="ticker-price">18,398.75</span> <span class="ticker-change up">+0.78% ▲</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">BTC/USD</span> <span class="ticker-price">$66,450.00</span> <span class="ticker-change up">+2.15% ▲</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">US 10Y YIELD</span> <span class="ticker-price">4.195%</span> <span class="ticker-change up">+0.03 ▲</span></div>
+    </div>
+  </div>
+
+  <!-- Main App Header / Navigation -->
+  <header class="app-header">
+    <div class="header-inner container">
+      <div class="brand-group">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+            <polyline points="16 7 22 7 22 13"></polyline>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">FinNews<span class="gradient-text">.AI</span></h1>
+          <span class="brand-badge">LLaMA 3.3 70B</span>
+        </div>
+      </div>
+
+      <!-- Quick Search Bar -->
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Search markets, stocks, Fed, inflation..." autocomplete="off">
+        <button id="clearSearchBtn" class="clear-btn" style="display:none;" title="Clear search">×</button>
+      </div>
+
+      <!-- System Connectivity & Actions -->
+      <div class="header-actions">
+        <div class="status-indicator-pill" id="aiStatusPill" title="AI Simplification Engine">
+          <span class="status-dot dot-pulse"></span>
+          <span id="aiStatusText">Groq LLaMA 3.3</span>
+        </div>
+        <div class="status-indicator-pill" id="newsStatusPill" title="News Provider Status">
+          <span class="status-dot dot-blue"></span>
+          <span id="newsStatusText">NewsAPI</span>
+        </div>
+        <button id="customSimplifyBtn" class="btn btn-outline" title="Paste custom text or earnings report">
+          <span>✍️ Custom Article</span>
+        </button>
+        <button id="bookmarksBtn" class="btn btn-outline" title="Saved Bookmarks">
+          <span>★ Saved (<span id="bookmarkCount">0</span>)</span>
+        </button>
+        <button id="settingsBtn" class="btn btn-icon" title="API Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section & Scenario Tabs -->
+  <section class="hero-section">
+    <div class="container hero-content">
+      <div class="hero-badge">AI FINANCIAL INTELLIGENCE PLATFORM</div>
+      <h2 class="hero-headline">Financial News, <span class="gradient-text">Demystified</span> by Generative AI</h2>
+      <p class="hero-subtext">
+        Translate complex market jargon, Fed rate mechanics, bond yields, and corporate earnings into clear, jargon-free explanations tailored specifically for your role.
+      </p>
+
+      <!-- Scenario Selector Tabs -->
+      <div class="scenario-selector-wrap">
+        <div class="scenario-label">Select Target Audience Persona:</div>
+        <div class="scenario-tabs" id="scenarioTabs">
+          <button class="scenario-tab active" data-persona="retail_investor" id="tabRetailInvestor">
+            <span class="tab-icon">📈</span>
+            <div class="tab-info">
+              <span class="tab-title">Retail Investor</span>
+              <span class="tab-sub">Stock &amp; Portfolio Impact</span>
+            </div>
+          </button>
+          <button class="scenario-tab" data-persona="student" id="tabStudent">
+            <span class="tab-icon">🎓</span>
+            <div class="tab-info">
+              <span class="tab-title">Finance Student</span>
+              <span class="tab-sub">Educational &amp; Macro Concepts</span>
+            </div>
+          </button>
+          <button class="scenario-tab" data-persona="professional" id="tabProfessional">
+            <span class="tab-icon">⏱️</span>
+            <div class="tab-info">
+              <span class="tab-title">Busy Professional</span>
+              <span class="tab-sub">60-Sec Executive Briefing</span>
+            </div>
+          </button>
+          <button class="scenario-tab" data-persona="volatility" id="tabVolatility">
+            <span class="tab-icon">⚡</span>
+            <div class="tab-info">
+              <span class="tab-title">High Volatility</span>
+              <span class="tab-sub">Breaking Catalyst &amp; Risk Intel</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Action & Control Bar -->
+      <div class="control-bar">
+        <button id="fetchSimplifyBtn" class="btn btn-primary btn-hero">
+          <span class="btn-spinner" id="mainSpinner" style="display:none;"></span>
+          <span class="btn-icon-symbol">⚡</span>
+          <span>Fetch &amp; Simplify News</span>
+        </button>
+
+        <!-- Category Filters -->
+        <div class="category-filters" id="categoryFilters">
+          <button class="cat-pill active" data-category="all">All News</button>
+          <button class="cat-pill" data-category="macro">Macro &amp; Fed</button>
+          <button class="cat-pill" data-category="markets">Stock Markets</button>
+          <button class="cat-pill" data-category="tech">Tech &amp; AI</button>
+          <button class="cat-pill" data-category="crypto">Crypto</button>
+          <button class="cat-pill" data-category="economy">Economy</button>
+        </div>
+
+        <!-- Prompt Engineering & Analysis Modes -->
+        <div class="mode-filters" id="modeFilters">
+          <span class="mode-label">AI Prompt Mode:</span>
+          <button class="mode-pill active" data-mode="financial_news">📰 Financial Simplification</button>
+          <button class="mode-pill" data-mode="market_event">📊 Market Event</button>
+          <button class="mode-pill" data-mode="economic">🏛️ Macro &amp; Rates</button>
+          <button class="mode-pill" data-mode="business">🏢 Business &amp; CapEx</button>
+          <button class="mode-pill" data-mode="jargon_free">✨ Jargon-Free</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- News Grid Dashboard -->
+  <main class="main-content container">
+    <div class="dashboard-header">
+      <div class="dashboard-title-group">
+        <h3 id="sectionTitle">Latest Financial News &amp; AI Simplifications</h3>
+        <span id="activePersonaBadge" class="persona-tag">Persona: Retail Investor</span>
+        <span id="activeModeBadge" class="mode-tag">Prompt: Financial Simplification</span>
+      </div>
+      <div class="dashboard-meta">
+        <div class="live-status-badge" id="liveTickerBadge" title="Real-time multi-source live wire">
+          <span class="live-dot pulse"></span>
+          <span class="live-text" id="liveStatusText">LIVE WIRE</span>
+        </div>
+        <span id="lastUpdated" class="last-updated-text">Updated just now</span>
+        <span id="articleCount">Loading articles...</span>
+        <button id="refreshBtn" class="btn btn-sm btn-ghost" title="Fetch Fresh Live News">
+          <span class="refresh-icon" id="refreshIcon">🔄</span> <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Scenario Description Banner -->
+    <div class="scenario-banner" id="scenarioBanner">
+      <span class="banner-icon" id="bannerIcon">📈</span>
+      <div class="banner-text">
+        <strong id="bannerTitle">Retail Investor Perspective Active:</strong>
+        <span id="bannerDesc">Summaries highlight stock valuations, portfolio impacts, and market sentiment without complicated Wall Street jargon.</span>
+      </div>
+    </div>
+
+    <!-- News Grid -->
+    <div class="news-grid" id="newsGrid">
+      <!-- Loading skeletons will appear here dynamically -->
+    </div>
+  </main>
+
+  <!-- Custom Article Modal -->
+  <div class="modal-backdrop" id="customModal" style="display:none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4>✍️ Simplify Custom Financial News or Article</h4>
+        <button class="modal-close" id="closeCustomModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint">Paste dense financial text, central bank meeting remarks, or earnings transcripts to simplify instantly.</p>
+        <div class="form-group">
+          <label for="customTitleInput">Article Title / Headline:</label>
+          <input type="text" id="customTitleInput" class="form-input" placeholder="e.g., Fed Minutes Signal Higher-for-Longer Rate Trajectory">
+        </div>
+        <div class="form-group">
+          <label for="customContentInput">Article Content / Financial Text:</label>
+          <textarea id="customContentInput" class="form-textarea" rows="7" placeholder="Paste complex financial text containing jargon, rates, inflation metrics, or corporate earnings..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="customPersonaSelect">Audience Lens:</label>
+          <select id="customPersonaSelect" class="form-select">
+            <option value="retail_investor">Retail Investor (Stock &amp; Portfolio Impact)</option>
+            <option value="student">Finance Student (Educational &amp; Macro Concepts)</option>
+            <option value="professional">Busy Professional (60-Sec Executive Briefing)</option>
+            <option value="volatility">High Volatility (Breaking Risk Intel)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="customModeSelect">Prompt Engineering Mode:</label>
+          <select id="customModeSelect" class="form-select">
+            <option value="financial_news">📰 Financial News Simplification</option>
+            <option value="market_event">📊 Market Event Explanation</option>
+            <option value="economic">🏛️ Economic News Summarization</option>
+            <option value="business">🏢 Business News Interpretation</option>
+            <option value="jargon_free">✨ Jargon-Free Content Generation</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="cancelCustomBtn">Cancel</button>
+        <button class="btn btn-primary" id="submitCustomBtn">
+          <span>⚡ Simplify with FinNews AI</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal (API Keys) -->
+  <div class="modal-backdrop" id="settingsModal" style="display:none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h4>⚙️ API Configuration &amp; Keys</h4>
+        <button class="modal-close" id="closeSettingsModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint">
+          FinNews AI is configured with an intelligent fallback engine so you can test immediately. To activate live real-time API calls, enter your keys below:
+        </p>
+        <div class="form-group">
+          <label for="groqKeyInput">Groq API Key (LLaMA 3.3-70B Versatile):</label>
+          <input type="password" id="groqKeyInput" class="form-input" placeholder="gsk_...">
+          <small class="field-help">Get a free, ultra-fast API key at <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer">console.groq.com</a></small>
+        </div>
+        <div class="form-group">
+          <label for="newsApiKeyInput">NewsAPI Key (Real-Time News Provider):</label>
+          <input type="password" id="newsApiKeyInput" class="form-input" placeholder="your_newsapi_key...">
+          <small class="field-help">Get a free key at <a href="https://newsapi.org/register" target="_blank" rel="noreferrer">newsapi.org</a></small>
+        </div>
+        <div class="system-diagnostic-box" id="diagnosticBox">
+          <div class="diagnostic-row">
+            <span>FastAPI Server:</span> <strong class="text-success">Connected</strong>
+          </div>
+          <div class="diagnostic-row">
+            <span>Groq LLaMA 3.3:</span> <strong id="diagGroqStatus">Checking...</strong>
+          </div>
+          <div class="diagnostic-row">
+            <span>NewsAPI Integration:</span> <strong id="diagNewsStatus">Checking...</strong>
+          </div>
+          <div class="diagnostic-row">
+            <span>SQLite Database:</span> <strong id="diagDbStatus">Checking...</strong>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="closeSettingsBtn">Close</button>
+        <button class="btn btn-primary" id="saveKeysBtn">Save Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bookmarks Modal -->
+  <div class="modal-backdrop" id="bookmarksModal" style="display:none;">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h4>★ Saved &amp; Bookmarked Articles</h4>
+        <button class="modal-close" id="closeBookmarksModal">✕</button>
+      </div>
+      <div class="modal-body" id="bookmarksList">
+        <p class="text-muted">No saved articles yet. Click the star button on any news card to bookmark it.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="closeBookmarksBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jargon Glossary Tooltip/Modal Popover -->
+  <div class="jargon-popover" id="jargonPopover" style="display:none;">
+    <div class="jargon-popover-header">
+      <strong id="popoverTerm">Term</strong>
+      <button class="popover-close" id="closePopoverBtn">✕</button>
+    </div>
+    <div class="jargon-popover-body" id="popoverDefinition">
+      Definition
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container footer-content">
+      <div class="footer-left">
+        <strong>FinNews AI</strong> — AI-Powered Financial News Simplification Platform
+        <p>Built with FastAPI • Groq LLaMA 3.3-70B • NewsAPI • SQLite • Vanilla CSS &amp; JavaScript</p>
+      </div>
+      <div class="footer-right">
+        <span class="architecture-pill">Architecture: Client-Server REST</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

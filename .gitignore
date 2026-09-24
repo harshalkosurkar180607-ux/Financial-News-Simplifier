@@ -1,0 +1,25 @@
+# Environment and API keys
+.env
+.env.local
+
+# SQLite Database
+*.db
+finnews.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Pytest / Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE / System
+.vscode/
+.idea/
+.system_generated/
+*.log
